@@ -1,0 +1,20 @@
+# TranscribrAI Dependencies
+# Python 3.11+ required
+
+# GUI Framework
+PyQt6>=6.5.0
+
+# Audio Recording
+sounddevice>=0.4.6
+soundfile>=0.12.1
+numpy>=1.24.0
+scipy>=1.10.0  # High-quality audio resampling
+
+# Speech-to-Text (faster-whisper - CTranslate2 backend, 4x faster on CPU)
+faster-whisper>=1.0.0
+
+# Keyboard Input Simulation
+pynput>=1.7.6
+
+# Wayland Global Hotkey Support
+evdev>=1.6.0

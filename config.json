@@ -1,0 +1,22 @@
+{
+    "whisper": {
+        "model": "small",
+        "language": "de",
+        "device": "cpu"
+    },
+    "audio": {
+        "sample_rate": 16000,
+        "channels": 1,
+        "device_index": null
+    },
+    "hotkey": {
+        "combination": "ctrl+shift+space"
+    },
+    "input": {
+        "delay_ms": 50
+    },
+    "gui": {
+        "minimize_to_tray": true,
+        "start_minimized": false
+    }
+}
