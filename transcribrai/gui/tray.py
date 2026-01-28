@@ -17,8 +17,8 @@ The tray icon changes color based on the application state:
 
 Example:
     >>> from PyQt6.QtWidgets import QApplication
-    >>> from src.gui.tray import SystemTray
-    >>> from src.app import AppState
+    >>> from transcribrai.gui.tray import SystemTray
+    >>> from transcribrai.app import AppState
     >>>
     >>> app = QApplication([])
     >>> tray = SystemTray()
@@ -45,7 +45,7 @@ from PyQt6.QtWidgets import (
     QSystemTrayIcon,
 )
 
-from src.app import AppState
+from transcribrai.app import AppState
 
 
 # GNOME color palette as specified in the GUI design document

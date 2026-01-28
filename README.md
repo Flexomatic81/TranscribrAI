@@ -63,7 +63,7 @@ python -m transcribrai
 
 ### Default Hotkey
 
-- **Ctrl+Alt+R**: Hold to record, release to transcribe
+- **Ctrl+Shift+Space**: Hold to record, release to transcribe
 
 Configure in Settings or edit `~/.config/transcribrai/config.json`.
 
@@ -73,7 +73,7 @@ Configuration file: `~/.config/transcribrai/config.json`
 
 ```json
 {
-  "hotkey": "ctrl+alt+r",
+  "hotkey": "ctrl+shift+space",
   "audio": {
     "device_index": null
   },

@@ -4,12 +4,13 @@ Audio recording functionality for TranscribrAI.
 Provides push-to-talk audio recording with volume level callbacks.
 """
 
+import atexit
 import logging
 import tempfile
 import threading
 import time
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional, Set
 
 import numpy as np
 import sounddevice as sd
@@ -18,6 +19,47 @@ import soundfile as sf
 from ..exceptions import AudioRecordingError, NoAudioDeviceError
 
 logger = logging.getLogger(__name__)
+
+# Global registry for tracking temp files across all AudioRecorder instances
+# This enables cleanup on exit even after crashes
+_temp_file_registry: Set[Path] = set()
+_temp_file_lock = threading.Lock()
+
+
+def _cleanup_temp_files() -> None:
+    """
+    Clean up any remaining temporary audio files on exit.
+
+    This function is registered with atexit to ensure temp files are
+    removed even if the application crashes or exits unexpectedly.
+    """
+    with _temp_file_lock:
+        for temp_path in list(_temp_file_registry):
+            try:
+                if temp_path.exists():
+                    temp_path.unlink()
+                    logger.debug(f"Cleaned up temp file on exit: {temp_path}")
+            except Exception as e:
+                logger.warning(f"Failed to clean up temp file {temp_path}: {e}")
+        _temp_file_registry.clear()
+
+
+# Register cleanup function to run on interpreter exit
+atexit.register(_cleanup_temp_files)
+
+
+def unregister_temp_file(temp_path: Path) -> None:
+    """
+    Remove a temp file from the cleanup registry after it has been processed.
+
+    Call this function after successfully processing and deleting a temp audio
+    file to remove it from the atexit cleanup registry.
+
+    Args:
+        temp_path: The path to the temp file to unregister.
+    """
+    with _temp_file_lock:
+        _temp_file_registry.discard(temp_path)
 
 
 class AudioRecorder:
@@ -132,8 +174,8 @@ class AudioRecorder:
                     volume = min(1.0, rms * 10)
                     try:
                         self.on_volume_change(volume)
-                    except:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"Error in volume change callback: {e}")
 
     def _get_compatible_sample_rate(self) -> int:
         """Get a compatible sample rate for the device."""
@@ -214,6 +256,10 @@ class AudioRecorder:
             temp_file = tempfile.NamedTemporaryFile(suffix='.wav', delete=False, prefix='transcribrai_')
             temp_path = Path(temp_file.name)
             temp_file.close()
+
+            # Register temp file for cleanup on exit
+            with _temp_file_lock:
+                _temp_file_registry.add(temp_path)
 
             sf.write(temp_path, audio, self.sample_rate)
             logger.info(f"Saved to {temp_path}")

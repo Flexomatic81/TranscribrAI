@@ -22,7 +22,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Any, Callable, Dict, Optional
 
-from .audio import AudioRecorder, AudioDeviceManager
+from .audio import AudioRecorder, AudioDeviceManager, unregister_temp_file
 from .transcription import WhisperTranscriber
 from .input import TerminalInput
 from .hotkey import HotkeyManager
@@ -345,6 +345,8 @@ class TranscribrApp:
         if self._current_audio_file and self._current_audio_file.exists():
             try:
                 self._current_audio_file.unlink()
+                # Remove from atexit cleanup registry since we cleaned it up
+                unregister_temp_file(self._current_audio_file)
             except Exception as e:
                 logger.warning(f"Error deleting temp file: {e}")
             self._current_audio_file = None
@@ -473,6 +475,8 @@ class TranscribrApp:
                 if self._current_audio_file and self._current_audio_file.exists():
                     try:
                         self._current_audio_file.unlink()
+                        # Remove from atexit cleanup registry since we cleaned it up
+                        unregister_temp_file(self._current_audio_file)
                     except Exception as e:
                         logger.warning(f"Failed to delete temp audio file: {e}")
                 self._current_audio_file = None
@@ -499,6 +503,8 @@ class TranscribrApp:
                 if self._current_audio_file and self._current_audio_file.exists():
                     try:
                         self._current_audio_file.unlink()
+                        # Remove from atexit cleanup registry since we cleaned it up
+                        unregister_temp_file(self._current_audio_file)
                     except Exception as e:
                         logger.warning(f"Failed to delete temp audio file: {e}")
                 self._current_audio_file = None

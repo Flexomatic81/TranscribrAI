@@ -101,11 +101,13 @@ class HotkeyManager:
         self._x11_listener = None
         self._x11_pressed_keys: Set[str] = set()
         self._x11_hotkey_active = False
+        self._x11_state_lock = threading.Lock()
 
         # Wayland: evdev devices and state
         self._evdev_devices: list = []
         self._pressed_keys: Set[int] = set()
         self._hotkey_active = False
+        self._evdev_state_lock = threading.Lock()
 
         # Parsed hotkey components
         self._required_modifiers: Set[str] = set()
@@ -412,37 +414,41 @@ class HotkeyManager:
 
         Compares the currently pressed keys against the required modifiers
         and trigger key. Invokes callbacks on state changes.
+
+        Thread-safe: Uses a lock to prevent race conditions when multiple
+        key events arrive in rapid succession.
         """
-        # Check if all required modifiers are pressed
-        modifiers_pressed = all(
-            mod in self._x11_pressed_keys
-            for mod in self._required_modifiers
-        )
+        with self._x11_state_lock:
+            # Check if all required modifiers are pressed
+            modifiers_pressed = all(
+                mod in self._x11_pressed_keys
+                for mod in self._required_modifiers
+            )
 
-        # Check if trigger key is pressed
-        trigger_pressed = self._trigger_key in self._x11_pressed_keys
+            # Check if trigger key is pressed
+            trigger_pressed = self._trigger_key in self._x11_pressed_keys
 
-        hotkey_is_active = modifiers_pressed and trigger_pressed
+            hotkey_is_active = modifiers_pressed and trigger_pressed
 
-        if hotkey_is_active and not self._x11_hotkey_active:
-            # Hotkey just activated
-            self._x11_hotkey_active = True
-            logger.debug("Hotkey pressed (X11)")
-            if self.on_hotkey_pressed:
-                try:
-                    self.on_hotkey_pressed()
-                except Exception as e:
-                    logger.error(f"Error in on_hotkey_pressed callback: {e}")
+            if hotkey_is_active and not self._x11_hotkey_active:
+                # Hotkey just activated
+                self._x11_hotkey_active = True
+                logger.debug("Hotkey pressed (X11)")
+                if self.on_hotkey_pressed:
+                    try:
+                        self.on_hotkey_pressed()
+                    except Exception as e:
+                        logger.error(f"Error in on_hotkey_pressed callback: {e}")
 
-        elif not hotkey_is_active and self._x11_hotkey_active:
-            # Hotkey just deactivated
-            self._x11_hotkey_active = False
-            logger.debug("Hotkey released (X11)")
-            if self.on_hotkey_released:
-                try:
-                    self.on_hotkey_released()
-                except Exception as e:
-                    logger.error(f"Error in on_hotkey_released callback: {e}")
+            elif not hotkey_is_active and self._x11_hotkey_active:
+                # Hotkey just deactivated
+                self._x11_hotkey_active = False
+                logger.debug("Hotkey released (X11)")
+                if self.on_hotkey_released:
+                    try:
+                        self.on_hotkey_released()
+                    except Exception as e:
+                        logger.error(f"Error in on_hotkey_released callback: {e}")
 
     # =========================================================================
     # Wayland Implementation (evdev)
@@ -623,52 +629,56 @@ class HotkeyManager:
 
         Maps the pressed evdev key codes to modifier/key names and compares
         against the configured hotkey combination.
+
+        Thread-safe: Uses a lock to prevent race conditions when multiple
+        key events arrive in rapid succession from different devices.
         """
         try:
             import evdev.ecodes as ec
         except ImportError:
             return
 
-        # Map modifier names to evdev key codes
-        modifier_codes = {
-            "ctrl": {ec.KEY_LEFTCTRL, ec.KEY_RIGHTCTRL},
-            "shift": {ec.KEY_LEFTSHIFT, ec.KEY_RIGHTSHIFT},
-            "alt": {ec.KEY_LEFTALT, ec.KEY_RIGHTALT},
-            "super": {ec.KEY_LEFTMETA, ec.KEY_RIGHTMETA},
-            "meta": {ec.KEY_LEFTMETA, ec.KEY_RIGHTMETA},
-        }
+        with self._evdev_state_lock:
+            # Map modifier names to evdev key codes
+            modifier_codes = {
+                "ctrl": {ec.KEY_LEFTCTRL, ec.KEY_RIGHTCTRL},
+                "shift": {ec.KEY_LEFTSHIFT, ec.KEY_RIGHTSHIFT},
+                "alt": {ec.KEY_LEFTALT, ec.KEY_RIGHTALT},
+                "super": {ec.KEY_LEFTMETA, ec.KEY_RIGHTMETA},
+                "meta": {ec.KEY_LEFTMETA, ec.KEY_RIGHTMETA},
+            }
 
-        # Check if all required modifiers are pressed
-        modifiers_pressed = all(
-            bool(modifier_codes.get(mod, set()) & self._pressed_keys)
-            for mod in self._required_modifiers
-        )
+            # Check if all required modifiers are pressed
+            modifiers_pressed = all(
+                bool(modifier_codes.get(mod, set()) & self._pressed_keys)
+                for mod in self._required_modifiers
+            )
 
-        # Get the evdev key code for the trigger key
-        trigger_code = self._get_evdev_key_code(self._trigger_key)
-        trigger_pressed = trigger_code in self._pressed_keys if trigger_code else False
+            # Get the evdev key code for the trigger key
+            trigger_code = self._get_evdev_key_code(self._trigger_key)
+            trigger_pressed = trigger_code in self._pressed_keys if trigger_code else False
 
-        hotkey_is_active = modifiers_pressed and trigger_pressed
+            hotkey_is_active = modifiers_pressed and trigger_pressed
 
-        if hotkey_is_active and not self._hotkey_active:
-            # Hotkey just activated
-            self._hotkey_active = True
-            logger.debug("Hotkey pressed (Wayland/evdev)")
-            if self.on_hotkey_pressed:
-                try:
-                    self.on_hotkey_pressed()
-                except Exception as e:
-                    logger.error(f"Error in on_hotkey_pressed callback: {e}")
+            if hotkey_is_active and not self._hotkey_active:
+                # Hotkey just activated
+                self._hotkey_active = True
+                logger.debug("Hotkey pressed (Wayland/evdev)")
+                if self.on_hotkey_pressed:
+                    try:
+                        self.on_hotkey_pressed()
+                    except Exception as e:
+                        logger.error(f"Error in on_hotkey_pressed callback: {e}")
 
-        elif not hotkey_is_active and self._hotkey_active:
-            # Hotkey just deactivated
-            self._hotkey_active = False
-            logger.debug("Hotkey released (Wayland/evdev)")
-            if self.on_hotkey_released:
-                try:
-                    self.on_hotkey_released()
-                except Exception as e:
-                    logger.error(f"Error in on_hotkey_released callback: {e}")
+            elif not hotkey_is_active and self._hotkey_active:
+                # Hotkey just deactivated
+                self._hotkey_active = False
+                logger.debug("Hotkey released (Wayland/evdev)")
+                if self.on_hotkey_released:
+                    try:
+                        self.on_hotkey_released()
+                    except Exception as e:
+                        logger.error(f"Error in on_hotkey_released callback: {e}")
 
     def _get_evdev_key_code(self, key_name: str) -> Optional[int]:
         """

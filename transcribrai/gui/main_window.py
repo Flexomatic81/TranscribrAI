@@ -10,8 +10,8 @@ for different application states.
 
 Example:
     >>> from PyQt6.QtWidgets import QApplication
-    >>> from src.app import TranscribrApp
-    >>> from src.gui.main_window import MainWindow
+    >>> from transcribrai.app import TranscribrApp
+    >>> from transcribrai.gui.main_window import MainWindow
     >>>
     >>> qt_app = QApplication([])
     >>> app = TranscribrApp()
@@ -62,7 +62,7 @@ from PyQt6.QtWidgets import (
 )
 
 if TYPE_CHECKING:
-    from src.app import AppState, TranscribrApp
+    from transcribrai.app import AppState, TranscribrApp
 
 from .settings import SettingsDialog
 
@@ -506,7 +506,7 @@ class MainWindow(QMainWindow):
         settings_requested: Signal emitted when settings should open.
 
     Example:
-        >>> from src.app import TranscribrApp
+        >>> from transcribrai.app import TranscribrApp
         >>> app = TranscribrApp()
         >>> window = MainWindow(app)
         >>> window.show()
@@ -812,7 +812,7 @@ class MainWindow(QMainWindow):
             return
 
         # Import AppState here to avoid circular imports
-        from src.app import AppState
+        from transcribrai.app import AppState
 
         def on_state_changed(old_state: AppState, new_state: AppState) -> None:
             """Handle app state changes - emits signal for thread safety."""

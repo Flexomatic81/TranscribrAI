@@ -10,8 +10,8 @@ Components:
     SystemTray: System tray icon with context menu and notifications.
 
 Example:
-    >>> from src.gui import MainWindow
-    >>> from src.app import TranscribrApp
+    >>> from transcribrai.gui import MainWindow
+    >>> from transcribrai.app import TranscribrApp
     >>>
     >>> app = TranscribrApp()
     >>> window = MainWindow(app)

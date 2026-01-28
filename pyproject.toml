@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "transcribrai"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Speech-to-text application with push-to-talk hotkey for Linux (X11/Wayland)"
 readme = "README.md"
 license = {text = "MIT"}
@@ -60,17 +60,19 @@ Repository = "https://github.com/transcribrai/transcribrai"
 Issues = "https://github.com/transcribrai/transcribrai/issues"
 
 [project.scripts]
-transcribrai = "main:main"
+transcribrai = "transcribrai.__main__:main"
 
 [project.gui-scripts]
-transcribrai-gui = "main:main"
+transcribrai-gui = "transcribrai.__main__:main"
 
 [tool.setuptools]
-packages = ["src", "src.audio", "src.transcription", "src.input", "src.hotkey", "src.gui"]
-py-modules = ["main"]
+packages = ["transcribrai", "transcribrai.audio", "transcribrai.transcription", "transcribrai.input", "transcribrai.hotkey", "transcribrai.gui"]
 
 [tool.setuptools.package-data]
 "*" = ["*.json"]
+
+[tool.setuptools.dynamic]
+version = {attr = "transcribrai.__version__"}
 
 [tool.black]
 line-length = 100
