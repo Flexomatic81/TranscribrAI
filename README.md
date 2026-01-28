@@ -13,25 +13,40 @@ Speech-to-text application with push-to-talk hotkey for Linux (X11/Wayland).
 
 ## Installation
 
+### Fedora/RHEL (including Bazzite, Distrobox)
+
 ```bash
+# 1. Enable RPM Fusion (required for FFmpeg)
+sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm -y
+
+# 2. Install system dependencies
+sudo dnf install ffmpeg-devel portaudio python3-pip ydotool -y
+
+# 3. Install TranscribrAI
 pip install transcribrai
 ```
 
-### System Dependencies
+### Ubuntu/Debian
 
-**Fedora/RHEL:**
 ```bash
-sudo dnf install portaudio-devel ydotool
+# 1. Install system dependencies
+sudo apt update
+sudo apt install ffmpeg libavcodec-dev libavformat-dev libavdevice-dev \
+    libavutil-dev libswscale-dev libswresample-dev \
+    portaudio19-dev python3-pip ydotool -y
+
+# 2. Install TranscribrAI
+pip install transcribrai
 ```
 
-**Ubuntu/Debian:**
-```bash
-sudo apt install portaudio19-dev ydotool
-```
+### Arch Linux
 
-**Arch Linux:**
 ```bash
-sudo pacman -S portaudio ydotool
+# 1. Install system dependencies
+sudo pacman -S ffmpeg portaudio python-pip ydotool
+
+# 2. Install TranscribrAI
+pip install transcribrai
 ```
 
 ### Wayland Setup
