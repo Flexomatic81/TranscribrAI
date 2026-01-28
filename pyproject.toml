@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transcribrai"
+version = "0.1.0"
+description = "Speech-to-text application with push-to-talk hotkey for Linux (X11/Wayland)"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+authors = [
+    {name = "TranscribrAI Team"}
+]
+keywords = [
+    "speech-to-text",
+    "voice-input",
+    "whisper",
+    "transcription",
+    "push-to-talk",
+    "wayland",
+    "linux"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "PyQt6>=6.5.0",
+    "sounddevice>=0.5.0",
+    "soundfile>=0.12.1",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "faster-whisper>=1.0.0",
+    "pynput>=1.7.6",
+    "evdev>=1.6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-qt>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/transcribrai/transcribrai"
+Repository = "https://github.com/transcribrai/transcribrai"
+Issues = "https://github.com/transcribrai/transcribrai/issues"
+
+[project.scripts]
+transcribrai = "main:main"
+
+[project.gui-scripts]
+transcribrai-gui = "main:main"
+
+[tool.setuptools]
+packages = ["src", "src.audio", "src.transcription", "src.input", "src.hotkey", "src.gui"]
+py-modules = ["main"]
+
+[tool.setuptools.package-data]
+"*" = ["*.json"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4"]
