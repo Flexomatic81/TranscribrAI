@@ -470,6 +470,7 @@ class HotkeyManager:
 
         # Find keyboard devices
         devices = []
+        seen_devices = {}  # Track devices by name, keep best one
         try:
             for path in evdev.list_devices():
                 try:
@@ -481,8 +482,24 @@ class HotkeyManager:
                         keys = capabilities[evdev.ecodes.EV_KEY]
                         # Check for keyboard-like keys (KEY_A = 30)
                         if evdev.ecodes.KEY_A in keys or evdev.ecodes.KEY_SPACE in keys:
-                            devices.append(device)
-                            logger.debug(f"Found keyboard device: {device.name}")
+                            # Check if device has modifier keys (prefer devices with modifiers)
+                            has_modifiers = (evdev.ecodes.KEY_LEFTCTRL in keys or
+                                           evdev.ecodes.KEY_LEFTALT in keys)
+
+                            # Handle duplicate devices - keep the one with modifiers
+                            if device.name in seen_devices:
+                                old_device, old_has_mods = seen_devices[device.name]
+                                if has_modifiers and not old_has_mods:
+                                    # Replace with better device
+                                    old_device.close()
+                                    seen_devices[device.name] = (device, has_modifiers)
+                                    logger.debug(f"Replaced device with better version: {device.name}")
+                                else:
+                                    device.close()
+                                    logger.debug(f"Skipping duplicate device: {device.name}")
+                                continue
+                            seen_devices[device.name] = (device, has_modifiers)
+                            logger.debug(f"Found keyboard device: {device.name} (modifiers: {has_modifiers})")
                 except PermissionError:
                     continue
                 except Exception as e:
@@ -494,6 +511,9 @@ class HotkeyManager:
                 "Bitte fuegen Sie Ihren Benutzer zur 'input'-Gruppe hinzu: "
                 "sudo usermod -aG input $USER (Neuanmeldung erforderlich)"
             ) from e
+
+        # Extract devices from seen_devices dict
+        devices = [dev for dev, _ in seen_devices.values()]
 
         if not devices:
             raise HotkeyRegistrationError(
